@@ -35,7 +35,7 @@ node {
         sh """
             curl -u kkfunda:kkfunda \
             --upload-file /var/lib/jenkins/workspace/JioScripted/target/maven-web-application.war \
-            "http://3.108.194.157:8080/manager/text/deploy?path=/maven-web-application&update=true"
+            "http://65.0.105.56:8080/manager/text/deploy?path=/maven-web-application&update=true"
         """
     }
 

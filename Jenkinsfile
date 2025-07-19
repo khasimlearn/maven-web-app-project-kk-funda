@@ -1,32 +1,79 @@
+
 node {
+
+   echo "git branch name: ${env.JOB_NAME}"
+   echo "build number is: ${env.BUILD_NUMBER}"
+   echo "node name is: ${env.NODE_NAME}"
     
     def mavenHome=tool name: "Maven3.9.9"
 
-    stage('Checkout') {
-        git branch: 'development',
-            credentialsId: 'e7967c99-09e4-405a-9e72-a39e1b637692',
-            url: 'https://github.com/khasimlearn/maven-web-app-project-kk-funda.git'
-    }
+    try {
 
-    stage('Build') {
-        sh "${mavenHome}/bin/mvn clean package"
-    }
-
-    stage('SonarQube Report') {
-        sh "${mavenHome}/bin/mvn clean package sonar:sonar"
-    }
-
-    stage('Nexus') {
-        sh "${mavenHome}/bin/mvn deploy"
-    }
-    stage('Deploy to Tomcat') 
-    {
+	stage('git checkout')
+	{
+      git branch: 'development', credentialsId: '8d341570-e046-4d2c-8060-33c3d5d493f7', url: 'https://github.com/gangavaramdevops/maven-web-app-project-kk-funda.git'
+	}
+	stage('compile')
+	{
+    sh  "${mavenHome}/bin/mvn compile"
+	}
+	stage('Build')
+	{
+    sh  "${mavenHome}/bin/mvn clean package"
+	}
+   stage('SQ Report')
+	{
+    sh  "${mavenHome}/bin/mvn sonar:sonar"
+	}
+	stage('Deploy into Nexus')
+	{
+    sh  "${mavenHome}/bin/mvn clean deploy"
+	}
+	stage('Deploy to Tomcat') {
         echo "Deploying WAR file using curl..."
 
         sh """
-            curl -u khasim:khasim \
-            --upload-file /var/lib/jenkins/workspace/JioScripted//target/maven-web-application.war \
-            "http://65.0.105.56:8080/manager/text/deploy?path=/maven-web-application&update=true"
+            curl -u kkfunda:kkfunda \
+            --upload-file /var/lib/jenkins/workspace/jio-scripted-way-pipeline-develoment/target/maven-web-application.war \
+            "http://3.108.194.157:8080/manager/text/deploy?path=/maven-web-application&update=true"
         """
     }
+
+  } 
+    catch (e) 
+    {
+    // If there was an exception thrown, the build failed
+    currentBuild.result = "FAILED"
+    throw e
+  } 
+    finally {
+    // Success or failure, always send notifications
+    notifyBuild(currentBuild.result)
+  }
+}
+
+def notifyBuild(String buildStatus = 'STARTED') {
+  // build status of null means successful
+  buildStatus =  buildStatus ?: 'SUCCESS'
+
+  // Default values
+  def colorName = 'RED'
+  def colorCode = '#FF0000'
+  def subject = "${buildStatus}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
+  def summary = "${subject} (${env.BUILD_URL})"
+
+  // Override default values based on build status
+  if (buildStatus == 'STARTED') {
+    color = 'YELLOW'
+    colorCode = '#FFFF00'
+  } else if (buildStatus == 'SUCCESS') {
+    color = 'GREEN'
+    colorCode = '#00FF00'
+  } else {
+    color = 'RED'
+    colorCode = '#FF0000'
+  }
+
+  // Send notifications
+  slackSend (color: colorCode, message: summary)
 }

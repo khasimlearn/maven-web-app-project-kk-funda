@@ -1,6 +1,6 @@
 node {
     
-    def mavenHome=tool name: "maven3.9.9"
+    def mavenHome=tool name: "Maven3.9.9"
 
     stage('Checkout') {
         git branch: 'development',

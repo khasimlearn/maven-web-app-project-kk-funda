@@ -1,6 +1,6 @@
 
 node {
-
+notifyBuild('STARTED')
    echo "git branch name: ${env.JOB_NAME}"
    echo "build number is: ${env.BUILD_NUMBER}"
    echo "node name is: ${env.NODE_NAME}"
